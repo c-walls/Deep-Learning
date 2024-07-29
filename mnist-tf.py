@@ -44,7 +44,7 @@ def feedforward_network(x):
     return output_layer
 
 # Training hyperparameters
-epochs = 15
+epochs = 45
 learning_rate = 0.001
 job_dir = 'mnist_model'
 
@@ -75,12 +75,18 @@ def evaluate(dataset):
 accuracy = evaluate(test_dataset)
 print(f"Test accuracy: {accuracy}")
 
+@tf.function(input_signature=[tf.TensorSpec(shape=[None, 784], dtype=tf.float32)])
+def serve_model(x):
+    return {'output': feedforward_network(x)}
+
 # Save the model
 class MyModel(tf.Module):
-    def __init__(self, weights):
+    def __init__(self, weights, biases):
         super(MyModel, self).__init__()
         self.weights = weights
+        self.biases = biases
+        self.serve_model = serve_model
 
-model = MyModel(weights)
+model = MyModel(weights, biases)
 save_path = os.path.join(job_dir, 'model')
 tf.saved_model.save(model, save_path)
